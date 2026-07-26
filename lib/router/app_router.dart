@@ -1,5 +1,5 @@
 import 'package:go_router/go_router.dart';
-import 'package:poke_app/widgets/app_scafold.dart';
+import 'package:poke_app/widgets/app_scaffold.dart';
 import '../screens/detail_screen.dart';
 import '../screens/favorites_screen.dart';
 import '../screens/home_screen.dart';
