@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/pokemon.dart';
 import '../services/pokemon_service.dart';
+import '../state/favorites_store.dart';
 import '../widgets/error_view.dart';
 import '../widgets/pokemon_card.dart';
 
@@ -17,33 +17,21 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   final _service = PokemonService();
   late Future<List<Pokemon>> _pokemonsFuture;
 
-  Set<String> _favoriteIds = {};
-  late final SharedPreferences _prefs;
-
   @override
   void initState() {
     super.initState();
     _pokemonsFuture = _service.fetchPokemons(); // same pattern as HomeScreen
-    _loadFavorites();
+    FavoritesStore.instance.addListener(_onFavoritesChanged);
+    FavoritesStore.instance.load();
   }
 
-  Future<void> _loadFavorites() async {
-    _prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _favoriteIds = (_prefs.getStringList('favorites') ?? []).toSet();
-    });
+  @override
+  void dispose() {
+    FavoritesStore.instance.removeListener(_onFavoritesChanged);
+    super.dispose();
   }
 
-  Future<void> _toggleFavorite(String id) async {
-    setState(() {
-      if (_favoriteIds.contains(id)) {
-        _favoriteIds.remove(id);
-      } else {
-        _favoriteIds.add(id);
-      }
-    });
-    await _prefs.setStringList('favorites', _favoriteIds.toList());
-  }
+  void _onFavoritesChanged() => setState(() {});
 
   void _retry() {
     setState(() {
@@ -67,7 +55,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
           }
 
           final favorites = snapshot.data!
-              .where((p) => _favoriteIds.contains(p.id))
+              .where((p) => FavoritesStore.instance.contains(p.id))
               .toList();
 
           if (favorites.isEmpty) {
@@ -90,7 +78,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                 child: PokemonCard(
                   pokemon: pokemon,
                   isFavorite: true,
-                  onFavoriteTap: () => _toggleFavorite(pokemon.id),
+                  onFavoriteTap: () =>
+                      FavoritesStore.instance.toggle(pokemon.id),
                 ),
               );
             },

@@ -1,9 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/pokemon.dart';
 import '../services/pokemon_service.dart';
+import '../state/favorites_store.dart';
 import '../widgets/error_view.dart';
 import '../widgets/pokemon_card.dart';
 
@@ -22,15 +22,22 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _searchQuery = '';
   String? _searchError; // null = no error
-  Set<String> _favoriteIds = {};
-  late final SharedPreferences _prefs; // single instance
 
   @override
   void initState() {
     super.initState();
     _pokemonsFuture = _loadFirstPage(); // fired ONCE, not per build
-    _loadFavorites();
+    FavoritesStore.instance.addListener(_onFavoritesChanged);
+    FavoritesStore.instance.load();
   }
+
+  @override
+  void dispose() {
+    FavoritesStore.instance.removeListener(_onFavoritesChanged);
+    super.dispose();
+  }
+
+  void _onFavoritesChanged() => setState(() {});
 
   Future<List<Pokemon>> _loadFirstPage() async {
     final pokemons = await _service.fetchPokemons();
@@ -52,25 +59,6 @@ class _HomeScreenState extends State<HomeScreen> {
     } finally {
       if (mounted) setState(() => _isLoadingMore = false);
     }
-  }
-
-  Future<void> _loadFavorites() async {
-    _prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _favoriteIds = (_prefs.getStringList('favorites') ?? []).toSet();
-    });
-  }
-
-  Future<void> _toggleFavorite(String id) async {
-    // Update UI immediately, then persist to disk.
-    setState(() {
-      if (_favoriteIds.contains(id)) {
-        _favoriteIds.remove(id);
-      } else {
-        _favoriteIds.add(id);
-      }
-    });
-    await _prefs.setStringList('favorites', _favoriteIds.toList());
   }
 
   void _onSearchChanged(String value) {
@@ -95,18 +83,14 @@ class _HomeScreenState extends State<HomeScreen> {
       body: FutureBuilder<List<Pokemon>>(
         future: _pokemonsFuture,
         builder: (context, snapshot) {
-          // 1. LOADING — the Future is still incomplete
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          // 2. ERROR — the Future completed with an exception
           if (snapshot.hasError) {
             return ErrorView(error: snapshot.error, onRetry: _retry);
           }
 
-          // 3. SUCCESS — paint the accumulated list, not the snapshot,
-          // so "Cargar más" can append pages to it
           return _buildContent(_pokemons);
         },
       ),
@@ -133,59 +117,58 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         Expanded(
-          // GridView is a shorthand for CustomScrollView + SliverGrid; using
-          // them directly lets a full-width button scroll after the grid.
           child: filtered.isEmpty
               ? const Center(child: Text('Ningún Pokémon coincide'))
               : CustomScrollView(
-                  slivers: [
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      sliver: SliverGrid.builder(
-                        itemCount: filtered.length,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
-                              childAspectRatio: 0.75,
-                            ),
-                        itemBuilder: (_, index) {
-                          final pokemon = filtered[index];
-                          return GestureDetector(
-                            onTap: () => context.push('/pokemon/${pokemon.id}'),
-                            child: PokemonCard(
-                              pokemon: pokemon,
-                              isFavorite: _favoriteIds.contains(pokemon.id),
-                              onFavoriteTap: () => _toggleFavorite(pokemon.id),
-                            ),
-                          );
-                        },
+            slivers: [
+              SliverPadding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                sliver: SliverGrid.builder(
+                  itemCount: filtered.length,
+                  gridDelegate:
+                  const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 0.75,
+                  ),
+                  itemBuilder: (_, index) {
+                    final pokemon = filtered[index];
+                    return GestureDetector(
+                      onTap: () => context.push('/pokemon/${pokemon.id}'),
+                      child: PokemonCard(
+                        pokemon: pokemon,
+                        isFavorite:
+                        FavoritesStore.instance.contains(pokemon.id),
+                        onFavoriteTap: () =>
+                            FavoritesStore.instance.toggle(pokemon.id),
                       ),
-                    ),
-                    // scrolls with the grid: only visible at the very end
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton(
-                            onPressed: _isLoadingMore ? null : _loadMore,
-                            child: _isLoadingMore
-                                ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Text('Cargar más'),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                    );
+                  },
                 ),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: _isLoadingMore ? null : _loadMore,
+                      child: _isLoadingMore
+                          ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                        ),
+                      )
+                          : const Text('Cargar más'),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
