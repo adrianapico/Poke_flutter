@@ -84,7 +84,7 @@ class _DetailView extends StatelessWidget {
           children: [
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(24, 100, 24, 32),
+              padding: const EdgeInsets.fromLTRB(24, 60, 24, 20),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
@@ -99,12 +99,12 @@ class _DetailView extends StatelessWidget {
                 children: [
                   Image.network(
                     detail.imageUrl,
-                    height: 180,
+                    height: 130,
                     errorBuilder: (context, error, stackTrace) {
                       return const Icon(Icons.catching_pokemon, size: 120);
                     },
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   Text(
                     detail.name,
                     textAlign: TextAlign.center,
@@ -117,7 +117,7 @@ class _DetailView extends StatelessWidget {
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 6),
                   Wrap(
                     alignment: WrapAlignment.center,
                     spacing: 8,
@@ -148,7 +148,7 @@ class _DetailView extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 14),
                   Text('Estadísticas', style: theme.textTheme.titleMedium),
                   const SizedBox(height: 12),
                   Container(
