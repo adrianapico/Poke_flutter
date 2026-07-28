@@ -9,14 +9,14 @@ class TypeChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Chip(
       label: Text(type),
-      backgroundColor: _colorDelTipo(type),
+      backgroundColor: colorForType(type),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
     );
   }
 
-  static Color _colorDelTipo(String tipo) {
+  static Color colorForType(String tipo) {
     switch (tipo.toLowerCase()) {
       case 'fire':
         return Colors.red.shade300;
