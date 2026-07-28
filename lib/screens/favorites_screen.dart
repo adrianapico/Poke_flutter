@@ -42,7 +42,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Favoritos')),
+      appBar: AppBar(title: const Text('Favorites')),
       body: FutureBuilder<List<Pokemon>>(
         future: _pokemonsFuture,
         builder: (context, snapshot) {
@@ -59,7 +59,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               .toList();
 
           if (favorites.isEmpty) {
-            return const Center(child: Text('Todavía no tienes favoritos :('));
+            return const Center(child: Text("You don't have any favorites yet. :("));
           }
 
           return GridView.builder(

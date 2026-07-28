@@ -6,6 +6,28 @@ import '../services/pokemon_service.dart';
 import '../state/favorites_store.dart';
 import '../widgets/error_view.dart';
 import '../widgets/pokemon_card.dart';
+import '../widgets/type_chip.dart';
+
+const _allTypes = [
+  'fire',
+  'water',
+  'grass',
+  'electric',
+  'ice',
+  'fighting',
+  'poison',
+  'ground',
+  'flying',
+  'psychic',
+  'bug',
+  'rock',
+  'ghost',
+  'dragon',
+  'dark',
+  'steel',
+  'fairy',
+  'normal',
+];
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -22,6 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _searchQuery = '';
   String? _searchError; // null = no error
+  String? _selectedType; // null = "Todos"
 
   @override
   void initState() {
@@ -45,6 +68,12 @@ class _HomeScreenState extends State<HomeScreen> {
     return pokemons;
   }
 
+  Future<List<Pokemon>> _loadByType(String type) async {
+    final pokemons = await _service.fetchPokemonsByType(type);
+    _pokemons = pokemons;
+    return pokemons;
+  }
+
   Future<void> _loadMore() async {
     setState(() => _isLoadingMore = true);
     try {
@@ -65,14 +94,24 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _searchQuery = value;
       _searchError = value.contains(RegExp(r'[0-9]'))
-          ? 'El nombre solo lleva letras'
+          ? 'The name can only contain letters.'
           : null;
+    });
+  }
+
+  void _onTypeSelected(String? type) {
+    setState(() {
+      _selectedType = type;
+      _pokemons = [];
+      _pokemonsFuture = type == null ? _loadFirstPage() : _loadByType(type);
     });
   }
 
   void _retry() {
     setState(() {
-      _pokemonsFuture = _loadFirstPage(); // a brand new Future
+      _pokemonsFuture = _selectedType == null
+          ? _loadFirstPage()
+          : _loadByType(_selectedType!); // a brand new Future
     });
   }
 
@@ -99,16 +138,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildContent(List<Pokemon> pokemons) {
     final filtered = pokemons
-        .where((p) => p.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+        .where(
+          (p) => p.name.toLowerCase().contains(_searchQuery.toLowerCase()),
+    )
         .toList();
 
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: TextField(
             decoration: InputDecoration(
-              hintText: 'Busca un Pokémon...',
+              hintText: 'Search a Pokémon...',
               prefixIcon: const Icon(Icons.search),
               border: const OutlineInputBorder(),
               errorText: _searchError,
@@ -116,9 +157,34 @@ class _HomeScreenState extends State<HomeScreen> {
             onChanged: _onSearchChanged,
           ),
         ),
+        SizedBox(
+          height: 40,
+          child: ListView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            children: [
+              ChoiceChip(
+                label: const Text('All'),
+                selected: _selectedType == null,
+                onSelected: (_) => _onTypeSelected(null),
+              ),
+              const SizedBox(width: 8),
+              for (final type in _allTypes) ...[
+                ChoiceChip(
+                  label: Text(type[0].toUpperCase() + type.substring(1)),
+                  selected: _selectedType == type,
+                  selectedColor: TypeChip.colorForType(type),
+                  onSelected: (_) => _onTypeSelected(type),
+                ),
+                const SizedBox(width: 8),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
         Expanded(
           child: filtered.isEmpty
-              ? const Center(child: Text('Ningún Pokémon coincide'))
+              ? const Center(child: Text('No Pokémon matches.'))
               : CustomScrollView(
             slivers: [
               SliverPadding(
@@ -135,11 +201,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   itemBuilder: (_, index) {
                     final pokemon = filtered[index];
                     return GestureDetector(
-                      onTap: () => context.push('/pokemon/${pokemon.id}'),
+                      onTap: () =>
+                          context.push('/pokemon/${pokemon.id}'),
                       child: PokemonCard(
                         pokemon: pokemon,
-                        isFavorite:
-                        FavoritesStore.instance.contains(pokemon.id),
+                        isFavorite: FavoritesStore.instance.contains(
+                          pokemon.id,
+                        ),
                         onFavoriteTap: () =>
                             FavoritesStore.instance.toggle(pokemon.id),
                       ),
@@ -147,26 +215,30 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
               ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: _isLoadingMore ? null : _loadMore,
-                      child: _isLoadingMore
-                          ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                        ),
-                      )
-                          : const Text('Cargar más'),
+              // "Load more" only makes sense for the unfiltered,
+              // paginated list — a type filter already returns every
+              // Pokémon of that type in a single request.
+              if (_selectedType == null)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton(
+                        onPressed: _isLoadingMore ? null : _loadMore,
+                        child: _isLoadingMore
+                            ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
+                        )
+                            : const Text('Load more.'),
+                      ),
                     ),
                   ),
                 ),
-              ),
             ],
           ),
         ),

@@ -139,17 +139,17 @@ class _DetailView extends StatelessWidget {
                       _MeasurementChip(
                         icon: Icons.height,
                         label: '${detail.heightInMeters.toStringAsFixed(1)} m',
-                        sublabel: 'Altura',
+                        sublabel: 'Height',
                       ),
                       _MeasurementChip(
                         icon: Icons.monitor_weight_outlined,
                         label: '${detail.weightInKg.toStringAsFixed(1)} kg',
-                        sublabel: 'Peso',
+                        sublabel: 'Weight',
                       ),
                     ],
                   ),
                   const SizedBox(height: 14),
-                  Text('Estadísticas', style: theme.textTheme.titleMedium),
+                  Text('Statistics', style: theme.textTheme.titleMedium),
                   const SizedBox(height: 12),
                   Container(
                     padding: const EdgeInsets.all(16),
@@ -166,7 +166,7 @@ class _DetailView extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  Text('Habilidades', style: theme.textTheme.titleMedium),
+                  Text('Abilities', style: theme.textTheme.titleMedium),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
