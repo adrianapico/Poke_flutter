@@ -1,17 +1,50 @@
-# poke_app
+# Poke Flutter — [your name/version]
 
-A new Flutter project.
+A Pokédex app built with Flutter that consumes the [PokeAPI](https://pokeapi.co/). Developed as part of a Flutter course, starting from a shared class base and customized with a personal theme, favorites state management, type filtering, and a redesigned detail screen.
 
-## Getting Started
+## Features
 
-This project is a starting point for a Flutter application.
+- 🔍 Search Pokémon by name
+- 🏷️ Filter by type (fire, water, grass, etc.)
+- ❤️ Favorites persisted locally and synced across screens
+- 📊 Detail screen with stats, abilities, height, and weight
+- 🎨 Custom visual theme (color, typography, rounded corners)
+- 📱 Tab navigation (Pokédex / Favorites)
 
-A few resources to get you started if this is your first Flutter project:
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## Tech stack
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- Flutter / Dart
+- [go_router](https://pub.dev/packages/go_router) — navigation
+- [dio](https://pub.dev/packages/dio) — HTTP client
+- [shared_preferences](https://pub.dev/packages/shared_preferences) — local persistence
+- [PokeAPI](https://pokeapi.co/) — Pokémon data
+
+## Getting started
+
+```bash
+git clone https://github.com/adrianapico/Poke_flutter.git
+cd Poke_flutter
+flutter pub get
+flutter run
+```
+
+Requires the Flutter SDK ([official guide](https://docs.flutter.dev/get-started/install)) and an emulator or connected device.
+
+## Project structure
+
+```
+lib/
+├── models/       # Pokemon, PokemonDetail, PokemonStat
+├── router/       # go_router configuration
+├── screens/      # Home, Detail, Favorites
+├── services/     # HTTP client for the PokeAPI
+├── state/        # FavoritesStore (shared state)
+├── theme/        # App visual theme
+├── utils/        # Helper functions (text formatting)
+└── widgets/      # Reusable components
+```
+
+## Credits
+
+Based on the base project from the Flutter course at Knot Academy.
